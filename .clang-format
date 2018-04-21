@@ -1,0 +1,17 @@
+AlignTrailingComments: false
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: true
+  AfterFunction: true
+  BeforeElse: true
+BreakBeforeBraces: Custom
+BreakBeforeLambdaBody: true
+BreakConstructorInitializers: AfterColon
+ColumnLimit: 0
+IndentWidth: 2
+PointerAlignment: Left
+ReflowComments: false
+SpaceBeforeCtorInitializerColon: false
+SpacesInParentheses: true

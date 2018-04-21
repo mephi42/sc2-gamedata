@@ -13,30 +13,30 @@
 #include <windows.h>
 #endif
 
-#include <string>
-#include <map>
 #include <cstdint>
-#include <vector>
 #include <exception>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <set>
 #include <streambuf>
+#include <string>
+#include <vector>
 
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/tokenizer.hpp>
 
 #if defined( WIN32 )
-#pragma warning(push)
-#pragma warning(disable: 4275 4996)
+#pragma warning( push )
+#pragma warning( disable : 4275 4996 )
 #endif
 #include <json/json.h>
 #include <tinyxml2.h>
 #if defined( WIN32 )
-#pragma warning(pop)
+#pragma warning( pop )
 #endif
 
 #if defined( WIN32 )
@@ -50,12 +50,12 @@
 #define _stricmp strcasecmp
 #endif
 
+using std::ifstream;
+using std::ofstream;
+using std::runtime_error;
+using std::set;
 using std::string;
 using std::vector;
-using std::set;
-using std::runtime_error;
-using std::ofstream;
-using std::ifstream;
 
 using StringVector = vector<string>;
 using StringSet = set<string>;
@@ -85,7 +85,7 @@ enum Race {
   Race_Neutral,
   Race_Terran,
   Race_Protoss,
-  Race_Zerg
+  Race_Zerg,
 };
 
 enum ResourceType {
@@ -93,7 +93,7 @@ enum ResourceType {
   Resource_Minerals,
   Resource_Vespene,
   Resource_Terrazine,
-  Resource_Custom
+  Resource_Custom,
 };
 
 struct UnitAbilityCard {
@@ -101,7 +101,8 @@ struct UnitAbilityCard {
   std::map<uint64_t, string> commands;
   bool removed;
   size_t indexCtr;
-  UnitAbilityCard(): removed( false ), indexCtr( 0 ) {}
+  UnitAbilityCard():
+      removed( false ), indexCtr( 0 ) {}
 };
 
 struct Unit {
@@ -157,13 +158,14 @@ struct Unit {
   double energyStart;
   double energyMax;
   double energyRegenRate;
-  Unit(): race( Race_Neutral ), lifeStart( 0.0 ), lifeMax( 0.0 ), speed( 0.0 ), acceleration( 0.0 ), food( 0.0 ),
-    light( false ), biological( false ), mechanical( false ), armored( false ), structure( false ), psionic( false ), massive( false ),
-    sight( 0.0 ), cargoSize( 0 ), turningRate( 0.0 ), shieldsStart( 0.0 ), shieldsMax( 0.0 ), lifeRegenRate( 0.0 ), radius( 0.0 ), lifeArmor( 0 ),
-    speedMultiplierCreep( 1.0 ), mineralCost( 0 ), vespeneCost( 0 ), campaign( false ), shieldRegenDelay( 0 ), shieldRegenRate( 0 ),
-    scoreMake( 0 ), scoreKill( 0 ), resourceType( Resource_None ), aiEvalFactor( 0.0 ), attackTargetPriority( 0.0 ),
-    stationaryTurningRate( 0.0 ), lateralAcceleration( 0.0 ), invulnerable( false ), resourceHarvestable( false ),
-    energyStart( 0.0 ), energyMax( 0.0 ), energyRegenRate( 0.0 )
+  Unit():
+      race( Race_Neutral ), lifeStart( 0.0 ), lifeMax( 0.0 ), speed( 0.0 ), acceleration( 0.0 ), food( 0.0 ),
+      light( false ), biological( false ), mechanical( false ), armored( false ), structure( false ), psionic( false ), massive( false ),
+      sight( 0.0 ), cargoSize( 0 ), turningRate( 0.0 ), shieldsStart( 0.0 ), shieldsMax( 0.0 ), lifeRegenRate( 0.0 ), radius( 0.0 ), lifeArmor( 0 ),
+      speedMultiplierCreep( 1.0 ), mineralCost( 0 ), vespeneCost( 0 ), campaign( false ), shieldRegenDelay( 0 ), shieldRegenRate( 0 ),
+      scoreMake( 0 ), scoreKill( 0 ), resourceType( Resource_None ), aiEvalFactor( 0.0 ), attackTargetPriority( 0.0 ),
+      stationaryTurningRate( 0.0 ), lateralAcceleration( 0.0 ), invulnerable( false ), resourceHarvestable( false ),
+      energyStart( 0.0 ), energyMax( 0.0 ), energyRegenRate( 0.0 )
   {
   }
 };
@@ -182,7 +184,7 @@ enum AbilType {
   AbilType_Merge, // archon
   AbilType_Research,
   AbilType_MorphPlacement, // spine crawler
-  AbilType_Other
+  AbilType_Other,
 };
 
 struct AbilityCommand {
@@ -194,8 +196,10 @@ struct AbilityCommand {
   string upgrade; // upgrade name
   int64_t mineralCost; // for upgrade
   int64_t vespeneCost; // for upgrade
-  AbilityCommand( const string& idx ): index( idx ), time( 0.0 ), isUpgrade( false ), mineralCost( 0 ), vespeneCost( 0 ) {}
-  AbilityCommand(): time( 0.0 ) {}
+  AbilityCommand( const string& idx ):
+      index( idx ), time( 0.0 ), isUpgrade( false ), mineralCost( 0 ), vespeneCost( 0 ) {}
+  AbilityCommand():
+      time( 0.0 ) {}
 };
 
 using AbilityCommandMap = std::map<string, AbilityCommand>;
@@ -211,7 +215,8 @@ struct Ability {
   bool buildInterruptible;
   bool trainFinishKills;
   bool trainCancelKills;
-  Ability(): type( AbilType_Other ), warp( false ), buildFinishKillsPeon( false ), buildInterruptible( false ), trainFinishKills( false ), trainCancelKills( false ) {}
+  Ability():
+      type( AbilType_Other ), warp( false ), buildFinishKillsPeon( false ), buildInterruptible( false ), trainFinishKills( false ), trainCancelKills( false ) {}
 };
 
 using AbilityMap = std::map<string, Ability>;
@@ -226,7 +231,7 @@ enum FilterAttribute {
   Search_Player,
   Search_Ally,
   Search_Air,
-  Search_Stasis
+  Search_Stasis,
 };
 
 void parseFilters( string full, std::set<FilterAttribute>& requires, std::set<FilterAttribute>& excludez )
@@ -320,9 +325,10 @@ struct Weapon {
   bool suicide;
   std::set<FilterAttribute> targetRequire;
   std::set<FilterAttribute> targetExclude;
-  Weapon(): range( 0.0 ), period( 0.0 ), arc( 0.0 ), damagePoint( 0.0 ), backSwing( 0.0 ),
-    rangeSlop( 0.0 ), arcSlop( 0.0 ), minScanRange( 0.0 ), randomDelayMin( 0.0 ), randomDelayMax( 0.0 ),
-    melee( false ), hidden( false ), disabled( false ), suicide( false ) {}
+  Weapon():
+      range( 0.0 ), period( 0.0 ), arc( 0.0 ), damagePoint( 0.0 ), backSwing( 0.0 ),
+      rangeSlop( 0.0 ), arcSlop( 0.0 ), minScanRange( 0.0 ), randomDelayMin( 0.0 ), randomDelayMax( 0.0 ),
+      melee( false ), hidden( false ), disabled( false ), suicide( false ) {}
 };
 
 using WeaponMap = std::map<string, Weapon>;
@@ -420,7 +426,7 @@ struct Effect {
     // Effect_Suicide, this is figured out for json export in resolveEffect()
     Effect_Persistent, // like lurker's spike
     Effect_EnumArea,
-    Effect_Other
+    Effect_Other,
   } type;
   enum ImpactLocation {
     Impact_Undefined,
@@ -429,7 +435,7 @@ struct Effect {
     Impact_TargetUnitOrPoint,
     Impact_TargetUnit,
     Impact_CasterUnit,
-    Impact_CasterPoint
+    Impact_CasterPoint,
   };
   string name;
   string impactEffect; // for missile
@@ -446,7 +452,8 @@ struct Effect {
   std::set<string> persistentEffects;
   std::vector<double> persistentPeriods;
   size_t periodCount;
-  Effect(): damageAmount( 0.0 ), damageArmorReduction( 0.0 ), impactLocation( Impact_Undefined ), flagKill( false ), periodCount( 0 ) {}
+  Effect():
+      damageAmount( 0.0 ), damageArmorReduction( 0.0 ), impactLocation( Impact_Undefined ), flagKill( false ), periodCount( 0 ) {}
 };
 
 using EffectMap = std::map<string, Effect>;
@@ -493,7 +500,7 @@ void parseEffectData( const string& filename, EffectMap& effects, size_t& notFou
         if ( effects.find( parentId ) == effects.end() )
         {
           notFoundCount++;
-          entry = entry->NextSiblingElement( );
+          entry = entry->NextSiblingElement();
           continue;
         }
         else if ( effects.find( id ) == effects.end() )
@@ -655,7 +662,8 @@ void parseUnitData( const string& filename, UnitMap& units, Unit& defaultUnit, s
 
       Unit& unit = ( isDefault ? defaultUnit : units[id] );
 
-      if ( !isDefault ) {
+      if ( !isDefault )
+      {
         unit.name = id;
         printf_s( "[+] unit: %s\r\n", unit.name.c_str() );
       }
@@ -856,7 +864,8 @@ struct Requirement {
   string id;
   string useNodeName;
   string showNodeName;
-  Requirement( const string& id_ = "" ): id( id_ ) {}
+  Requirement( const string& id_ = "" ):
+      id( id_ ) {}
 };
 
 using RequirementMap = std::map<string, Requirement>;
@@ -868,7 +877,7 @@ enum RequirementNodeType {
   ReqNode_LogicAnd,
   ReqNode_LogicOr,
   ReqNode_LogicEq,
-  ReqNode_LogicNot
+  ReqNode_LogicNot,
 };
 
 inline RequirementNodeType reqNodeTypeToEnum( const char* str )
@@ -895,7 +904,8 @@ struct RequirementNode {
   string countLink; // countUpgrade, countUnit
   string countState; // countUpgrade, countUnit
   std::map<size_t, string> operands; // and, or, eq, not
-  RequirementNode( const string& id_ = "" ): id( id_ ), type( ReqNode_Unknown ) {}
+  RequirementNode( const string& id_ = "" ):
+      id( id_ ), type( ReqNode_Unknown ) {}
 };
 
 using RequirementNodeMap = std::map<string, RequirementNode>;
@@ -1021,7 +1031,8 @@ struct Footprint {
   vector<char> creep;
   vector<char> nearResources;
   FootprintShape shape;
-  Footprint(): x( 0 ), y( 0 ), w( 0 ), h( 0 ), removed( false ), hasCreep( false ), hasNearResources( false ) {}
+  Footprint():
+      x( 0 ), y( 0 ), w( 0 ), h( 0 ), removed( false ), hasCreep( false ), hasNearResources( false ) {}
 };
 
 using FootprintMap = std::map<string, Footprint>;
@@ -1484,7 +1495,7 @@ void parseAbilityData( const string& filename, AbilityMap& abilities )
             }
           }
         }
-        else if ( ( abil.type == AbilType_Morph || abil.type == AbilType_MorphPlacement ) &&  _strcmpi( field->Name(), "CmdButtonArray" ) == 0 && field->Attribute( "index" ) && _stricmp( field->Attribute( "index" ), "Execute" ) == 0 && field->Attribute( "Requirements" ) )
+        else if ( ( abil.type == AbilType_Morph || abil.type == AbilType_MorphPlacement ) && _strcmpi( field->Name(), "CmdButtonArray" ) == 0 && field->Attribute( "index" ) && _stricmp( field->Attribute( "index" ), "Execute" ) == 0 && field->Attribute( "Requirements" ) )
         {
           if ( abil.commands.find( "Execute" ) == abil.commands.end() )
             abil.commands["Execute"] = AbilityCommand( "Execute" );
@@ -2115,7 +2126,8 @@ struct TechTreeBuildEntry {
   bool finishKillsPeon;
   bool trainFinishKills;
   bool trainCancelKills;
-  TechTreeBuildEntry(): buildInterruptible( false ), finishKillsPeon( false ), trainFinishKills( false ), trainCancelKills( false ) {}
+  TechTreeBuildEntry():
+      buildInterruptible( false ), finishKillsPeon( false ), trainFinishKills( false ), trainCancelKills( false ) {}
 };
 
 struct TechTreeResearchEntry {
@@ -2151,11 +2163,7 @@ void generateTechTree( UnitMap& units, AbilityMap& abilities, Race race, TechTre
     // some cleanup
     if ( boost::iequals( unit.second.name.substr( 0, 7 ), "XelNaga" ) && !boost::iequals( unit.second.name, "XelNagaTower" ) )
       continue;
-    if ( boost::iequals( unit.second.name.substr( 0, 4 ), "Aiur" )
-      || boost::iequals( unit.second.name.substr( 0, 8 ), "PortCity" )
-      || boost::iequals( unit.second.name.substr( 0, 8 ), "Shakuras" )
-      || boost::iequals( unit.second.name.substr( 0, 19 ), "SnowRefinery_Terran" )
-      || boost::iequals( unit.second.name.substr( 0, 15 ), "ExtendingBridge" ) )
+    if ( boost::iequals( unit.second.name.substr( 0, 4 ), "Aiur" ) || boost::iequals( unit.second.name.substr( 0, 8 ), "PortCity" ) || boost::iequals( unit.second.name.substr( 0, 8 ), "Shakuras" ) || boost::iequals( unit.second.name.substr( 0, 19 ), "SnowRefinery_Terran" ) || boost::iequals( unit.second.name.substr( 0, 15 ), "ExtendingBridge" ) )
       continue;
 
     // hardcode to get rid of mothership core; i think blizzard screwed up in their cmdcard XML regarding this. it might even be possible to still build one in a melee game.
@@ -2599,12 +2607,12 @@ int main()
 
   // sc2 uses incremental patches so these have to be in order
   vector<string> mods = {
-    "core.sc2mod",
-    "liberty.sc2mod",
-    "swarm.sc2mod",
-    "void.sc2mod",
-    "voidmulti.sc2mod",
-    "balancemulti.sc2mod"
+      "core.sc2mod",
+      "liberty.sc2mod",
+      "swarm.sc2mod",
+      "void.sc2mod",
+      "voidmulti.sc2mod",
+      "balancemulti.sc2mod",
   };
 
   UnitMap units;
