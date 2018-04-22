@@ -170,9 +170,21 @@ struct Unit {
   }
 };
 
+struct EffectArrayEntry {
+  string operation;
+  string referenceType;
+  string referenceId;
+  string referenceAttribute;
+  string value;
+};
+
 struct Upgrade {
   string name;
   Race race;
+  vector<EffectArrayEntry> effectArray;
+
+  Upgrade():
+      race( Race_Neutral ) {}
 };
 
 using UpgradeMap = std::map<string, Upgrade>;
@@ -1537,6 +1549,63 @@ void parseAbilityData( const string& filename, AbilityMap& abilities )
   }
 }
 
+void parseUpgradeData( const string& filename, UpgradeMap& upgrades, Upgrade& defaultUpgrade )
+{
+  tinyxml2::XMLDocument doc;
+  if ( doc.LoadFile( filename.c_str() ) != tinyxml2::XML_SUCCESS )
+    throw runtime_error( "Could not load XML file " + filename );
+
+  auto catalog = doc.FirstChildElement( "Catalog" );
+  for ( auto entry = catalog->FirstChildElement(); entry; entry = entry->NextSiblingElement() )
+  {
+    bool isDefault = ( entry->Attribute( "default" ) && entry->Int64Attribute( "default" ) == 1 && !entry->Attribute( "id" ) );
+    auto id = entry->Attribute( "id" );
+    if ( id || isDefault )
+    {
+      if ( !isDefault && upgrades.find( id ) == upgrades.end() )
+        upgrades[id] = defaultUpgrade;
+
+      Upgrade& upgrade = ( isDefault ? defaultUpgrade : upgrades[id] );
+      if ( !isDefault )
+      {
+        upgrade.name = id;
+        printf_s( "[+] upgrade: %s\r\n", upgrade.name.c_str() );
+      }
+
+      for ( auto field = entry->FirstChildElement(); field; field = field->NextSiblingElement() )
+      {
+        if ( _strcmpi( field->Name(), "Race" ) == 0 )
+          upgrade.race = raceToEnum( field->Attribute( "value" ) );
+        else if ( _strcmpi( field->Name(), "EffectArray" ) == 0 )
+        {
+          EffectArrayEntry entry;
+          auto operation = field->Attribute( "Operation" );
+          if ( operation )
+            entry.operation = operation;
+          else
+            entry.operation = "Add";
+          auto reference = field->Attribute( "Reference" );
+          if ( !reference )
+            continue;
+          string referenceStr( reference );
+          vector<string> referenceParts;
+          boost::split( referenceParts, referenceStr, boost::is_any_of( "," ) );
+          if ( referenceParts.size() != 3 )
+            continue;
+          entry.referenceType = referenceParts[0];
+          entry.referenceId = referenceParts[1];
+          entry.referenceAttribute = referenceParts[2];
+          auto value = field->Attribute( "Value" );
+          if ( !value )
+            continue;
+          entry.value = value;
+          upgrade.effectArray.push_back( entry );
+        }
+      }
+    }
+  }
+}
+
 const char* raceStr( Race race )
 {
   if ( race == Race_Terran )
@@ -2038,6 +2107,47 @@ void dumpWeapons( WeaponMap& weapons, EffectMap& effects )
   out.close();
 }
 
+void dumpUpgrades( UpgradeMap& upgrades )
+{
+  printf_s( "[d] dumping upgrades...\r\n" );
+
+  ofstream out;
+  out.open( "upgrades.json" );
+
+  Json::Value root;
+  for ( auto& upgrade : upgrades )
+  {
+    Json::Value uval( Json::objectValue );
+    uval["name"] = upgrade.second.name;
+    uval["race"] = raceStr( upgrade.second.race );
+
+    Json::Value effectArray( Json::arrayValue );
+    for ( auto& entry : upgrade.second.effectArray )
+    {
+      Json::Value eval( Json::objectValue );
+      eval["operation"] = entry.operation;
+      eval["referenceType"] = entry.referenceType;
+      eval["referenceId"] = entry.referenceId;
+      eval["referenceAttribute"] = entry.referenceAttribute;
+      eval["value"] = entry.value;
+
+      effectArray.append( eval );
+    }
+
+    uval["effectArray"] = effectArray;
+
+    root[upgrade.second.name] = uval;
+  }
+
+  Json::StreamWriterBuilder builder;
+  builder["commentStyle"] = "None";
+  builder["indentation"] = "  ";
+  std::unique_ptr<Json::StreamWriter> writer( builder.newStreamWriter() );
+  writer->write( root, &out );
+
+  out.close();
+}
+
 void dumpAbilities( AbilityMap& abils, RequirementMap& requirements, RequirementNodeMap& nodes )
 {
   printf_s( "[d] dumping abilities...\r\n" );
@@ -2446,7 +2556,7 @@ void dumpTechTree( TechMap& techtree, RequirementMap& requirements, RequirementN
   out.close();
 }
 
-void readGameData( const string& path, UnitMap& units, Unit& defaultUnit, Footprint& defaultFootprint, AbilityMap& abilities, RequirementMap& requirements, RequirementNodeMap& nodes, FootprintMap& footprints, WeaponMap& weapons, Weapon& defaultWeapon, EffectMap& effects )
+void readGameData( const string& path, UnitMap& units, Unit& defaultUnit, Footprint& defaultFootprint, AbilityMap& abilities, RequirementMap& requirements, RequirementNodeMap& nodes, FootprintMap& footprints, WeaponMap& weapons, Weapon& defaultWeapon, EffectMap& effects, UpgradeMap& upgrades, Upgrade& defaultUpgrade )
 {
   string unitDataPath = path + PATHSEP "UnitData.xml";
 
@@ -2497,6 +2607,9 @@ void readGameData( const string& path, UnitMap& units, Unit& defaultUnit, Footpr
     if ( loops > 10 )
       throw runtime_error( "Failed to parse effect data in 10 rounds, wtf?" );
   }
+
+  string upgradeDataPath = path + PATHSEP "UpgradeData.xml";
+  parseUpgradeData( upgradeDataPath, upgrades, defaultUpgrade );
 }
 
 void readStableID( const string& path, NameToIDMapping& unitMapping, NameToIDMapping& abilityMapping, NameToIDMapping& upgradeMapping )
@@ -2625,6 +2738,8 @@ int main()
   Footprint defaultFootprint;
   EffectMap effects;
   Unit defaultUnit;
+  UpgradeMap upgrades;
+  Upgrade defaultUpgrade;
 
   for ( auto mod : mods )
   {
@@ -2634,7 +2749,7 @@ int main()
     printf_s( "[A] mod: %s\r\n", mod.c_str() );
 
     string gameDataPath = modPath + PATHSEP "base.sc2data" PATHSEP "GameData";
-    readGameData( gameDataPath, units, defaultUnit, defaultFootprint, abilities, requirements, nodes, footprints, weapons, defaultWeapon, effects );
+    readGameData( gameDataPath, units, defaultUnit, defaultFootprint, abilities, requirements, nodes, footprints, weapons, defaultWeapon, effects, upgrades, defaultUpgrade );
   }
 
   cleanupUnitCommandCards( units );
@@ -2644,6 +2759,8 @@ int main()
   dumpAbilities( abilities, requirements, nodes );
 
   dumpWeapons( weapons, effects );
+
+  dumpUpgrades( upgrades );
 
   TechTree zergTechTree;
   TechTree protossTechTree;

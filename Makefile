@@ -1,4 +1,4 @@
-CXXFLAGS=-std=c++11 -Wall -Wextra -Werror $(EXTRA_CXXFLAGS)
+CXXFLAGS=-std=c++11 -Wall -Wextra -Werror -g $(EXTRA_CXXFLAGS)
 LDFLAGS=$(EXTRA_LDFLAGS)
 
 generator: generator.cpp
